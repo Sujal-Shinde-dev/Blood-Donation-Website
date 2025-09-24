@@ -14,6 +14,18 @@ interface DonorLoginProps {
 
 export function DonorLogin({ onBack, onLogin, onRegister }: DonorLoginProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+    setError("");
+    onLogin();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
@@ -54,6 +66,8 @@ export function DonorLogin({ onBack, onLogin, onRegister }: DonorLoginProps) {
                     id="email" 
                     type="email" 
                     placeholder="your.email@example.com" 
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                   />
                 </div>
                 
@@ -64,6 +78,8 @@ export function DonorLogin({ onBack, onLogin, onRegister }: DonorLoginProps) {
                       id="password" 
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
                     />
                     <Button
                       type="button"
@@ -81,6 +97,10 @@ export function DonorLogin({ onBack, onLogin, onRegister }: DonorLoginProps) {
                   </div>
                 </div>
 
+                {error && (
+                  <div className="text-red-600 text-sm">{error}</div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <Button variant="link" className="p-0 h-auto text-red-600">
                     Forgot password?
@@ -88,7 +108,7 @@ export function DonorLogin({ onBack, onLogin, onRegister }: DonorLoginProps) {
                 </div>
 
                 <Button 
-                  onClick={onLogin}
+                  onClick={handleLogin}
                   className="w-full bg-red-600 hover:bg-red-700 text-white py-3"
                   size="lg"
                 >

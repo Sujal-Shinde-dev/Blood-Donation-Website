@@ -61,17 +61,6 @@ export function DonorDashboard({ onBack }: DonorDashboardProps) {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Heart className="h-8 w-8 text-red-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Lives Saved</p>
-                  <p className="text-2xl font-bold">36</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-red-600 mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Days Until Eligible</p>

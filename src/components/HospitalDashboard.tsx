@@ -1,5 +1,5 @@
 import { ArrowLeft, Building2, MapPin, Calendar, Droplets, AlertTriangle, Phone, Mail, Bell, Settings, LogOut, Plus, Eye, Edit, Trash2, Filter, Download, CheckCircle, Clock, XCircle, Users, FileText, BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -11,8 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Progress } from "./ui/progress";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Adjust path if needed
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "../firebase"; // Make sure this is your Firebase config
 
 interface HospitalDashboardProps {
   onBack: () => void;
@@ -32,6 +32,7 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [requests, setRequests] = useState<any[]>([]);
 
   // Mock data
   const hospitalInfo = {
@@ -50,38 +51,20 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
     rejected: 2
   };
 
-  const mockRequests = [
-    {
-      id: "REQ-001",
-      bloodGroup: "O-",
-      units: 3,
-      status: "pending",
-      urgency: "critical",
-      createdDate: "2024-01-15",
-      requiredDate: "2024-01-16",
-      patientCondition: "Emergency Surgery"
-    },
-    {
-      id: "REQ-002",
-      bloodGroup: "A+",
-      units: 2,
-      status: "approved",
-      urgency: "routine",
-      createdDate: "2024-01-14",
-      requiredDate: "2024-01-17",
-      patientCondition: "Scheduled Surgery"
-    },
-    {
-      id: "REQ-003",
-      bloodGroup: "B+",
-      units: 1,
-      status: "fulfilled",
-      urgency: "urgent",
-      createdDate: "2024-01-13",
-      requiredDate: "2024-01-15",
-      patientCondition: "Blood Transfusion"
-    }
-  ];
+  // Fetch BloodRequests from Firestore
+  useEffect(() => {
+    // Listen for real-time updates
+    const q = query(collection(db, "BloodRequests"), orderBy("createdDate", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setRequests(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+      );
+    });
+    return () => unsubscribe();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -105,8 +88,8 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
   const handleCreateRequest = async () => {
     setLoading(true);
     try {
-      await addDoc(collection(db, "blood_request"), {
-        bloodType,
+      await addDoc(collection(db, "BloodRequests"), {
+        bloodGroup: bloodType,
         units: Number(units),
         urgency,
         requiredDate,
@@ -116,14 +99,12 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
         createdDate: new Date().toISOString().slice(0, 10),
       });
       setDialogOpen(false);
-      // Optionally reset form fields here
       setBloodType("");
       setUnits("");
       setUrgency("");
       setRequiredDate("");
       setPatientCondition("");
       setNotes("");
-      // Optionally refresh requests list
     } catch (err) {
       alert("Failed to create request.");
     }
@@ -217,7 +198,7 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockRequests.slice(0, 3).map((request) => (
+            {requests.slice(0, 3).map((request) => (
               <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <Droplets className="h-5 w-5 text-blue-600" />
@@ -392,7 +373,7 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockRequests.map((request) => (
+              {requests.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="font-medium">{request.id}</TableCell>
                   <TableCell>{request.bloodGroup}</TableCell>
@@ -435,7 +416,7 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
   );
 
   const renderRequestDetail = () => {
-    const request = mockRequests.find(r => r.id === selectedRequestId);
+    const request = requests.find(r => r.id === selectedRequestId);
     if (!request) return null;
 
     return (
@@ -747,7 +728,7 @@ export function HospitalDashboard({ onBack }: HospitalDashboardProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockRequests.map((request) => (
+              {requests.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="font-medium">{request.id}</TableCell>
                   <TableCell>{request.bloodGroup}</TableCell>
